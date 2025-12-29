@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <title>11+ Maths Practice | Free Maths Games</title>
+
+  <meta name="description"
+        content="Free 11+ maths practice games. Useful for Year 6 revision and secondary school preparation." />
+
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #121a33;
+      --text: #eef2ff;
+      --muted: #a9b7dd;
+      --accent: #7aa7ff;
+      --border: rgba(255,255,255,.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+
+    a { color: inherit; }
+
+    .wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 28px 18px;
+    }
+
+    header {
+      margin-bottom: 20px;
+    }
+
+    .brand {
+      font-weight: 900;
+      font-size: 18px;
+      letter-spacing: .2px;
+    }
+
+    .hero {
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: rgba(18,26,51,.65);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(24px, 3vw, 34px);
+      line-height: 1.15;
+    }
+
+    .lead {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+      max-width: 70ch;
+    }
+
+    .section {
+      margin-top: 18px;
+    }
+
+    .section h2 {
+      font-size: 16px;
+      margin: 0 0 10px;
+      letter-spacing: .2px;
+    }
+
+    /* Game card */
+    .game-card {
+      display: block;
+      text-decoration: none;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      background: rgba(255,255,255,.05);
+      max-width: 560px;
+      transition: background .2s ease, transform .05s ease;
+    }
+
+    .game-card:hover {
+      background: rgba(255,255,255,.08);
+    }
+
+    .game-card:active {
+      transform: translateY(1px);
+    }
+
+    .game-card img {
+      display: block;
+      width: 200px;
+      height: 133px;
+    }
+
+    .game-card-text {
+      padding: 14px 16px;
+    }
+
+    .game-card-text h3 {
+      margin: 0 0 4px;
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    .game-card-text p {
+      margin: 0;
+      font-size: 14.5px;
+      color: var(--muted);
+    }
+
+    .resources a {
+      text-decoration: none;
+      border-bottom: 1px solid rgba(122,167,255,.55);
+    }
+
+    .resources a:hover {
+      border-bottom-color: rgba(122,167,255,.9);
+    }
+
+    footer {
+      margin-top: 24px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      font-size: 12.5px;
+      color: rgba(238,242,255,.75);
+      line-height: 1.6;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">11+ Maths Practice</div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <h1>Free 11+ maths practice</h1>
+        <p class="lead">
+          A small collection of free maths games designed for 11+ practice.
+          Also suitable for Year 6 revision and preparing for secondary school.
+        </p>
+      </section>
+
+      <section class="section" aria-label="Games">
+        <h2>Games</h2>
+
+        <!-- Football Fractions game card -->
+        <a href="football_fractions/index.html" class="game-card" aria-label="Play Football Fractions">
+          <img
+            src="football_fractions/card_small.png"
+            alt="Football Fractions - 11+ maths fractions game"
+          />
+          <div class="game-card-text">
+            <h3>Football Fractions</h3>
+            <p>
+              Practise adding and subtracting fractions with different denominators.
+            </p>
+          </div>
+        </a>
+      </section>
+
+      <section class="section resources" aria-label="Resources">
+
+        Coming Soon
+
+        <!--
+        <h2>Practice papers</h2>
+        <p class="lead" style="font-size:14.5px;">
+          For mixed-topic and timed practice, Bond 11+ maths papers are widely used.
+        </p>
+
+        <p class="lead" style="font-size:14.5px;">
+          • <a href="https://www.amazon.co.uk/" target="_blank" rel="nofollow sponsored noopener">
+            Bond 11+ Maths: Assessment Papers
+          </a><br />
+          • <a href="https://www.amazon.co.uk/" target="_blank" rel="nofollow sponsored noopener">
+            Bond 11+ Maths: Practice Papers
+          </a>
+        </p>
+        -->
+
+        <p style="font-size:12px; color:rgba(238,242,255,.7);">
+          As an Amazon Associate I earn from qualifying purchases.
+        </p>
+      </section>
+    </main>
+
+    <footer>
+      <p><strong>© <span id="year"></span> 11+ Maths Practice — All rights reserved.</strong></p>
+
+      <p>
+        Permission is granted to view and run this software for personal,
+        non-commercial educational use only.
+      </p>
+
+      <p>
+        Redistribution, modification, or use of this code to create other
+        websites, applications, or derivative works is strictly prohibited
+        without prior written permission from the copyright holder.
+      </p>
+    </footer>
+  </div>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

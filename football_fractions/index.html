@@ -1,0 +1,1305 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Football Fractions ⚽ — Add & Subtract</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #121a2b;
+      --panel2: #0f1729;
+      --text: #e7eefc;
+      --muted: #a9b7d6;
+      --good: #30d158;
+      --bad: #ff453a;
+      --warn: #ffd60a;
+      --accent: #6ea8fe;
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: radial-gradient(1200px 700px at 50% 10%, #182044 0%, var(--bg) 60%);
+      color: var(--text);
+    }
+
+    header {
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+      background: linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, 0));
+      position: sticky;
+      top: 0;
+      backdrop-filter: blur(8px);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: .2px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pill {
+      font-size: 12px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, .06);
+      border: 1px solid rgba(255, 255, 255, .10);
+      padding: 6px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 18px;
+      display: grid;
+      grid-template-columns: 520px 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 980px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .02));
+      border: 1px solid rgba(255, 255, 255, .10);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
+      overflow: hidden;
+    }
+
+    .card .hd {
+      padding: 14px 14px 10px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+      background: rgba(0, 0, 0, .12);
+    }
+
+    .card .hd h2 {
+      margin: 0;
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 600;
+      letter-spacing: .2px;
+    }
+
+    .card .bd {
+      padding: 14px
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center
+    }
+
+    button {
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, .14);
+      background: rgba(255, 255, 255, .06);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-weight: 650;
+      letter-spacing: .15px;
+      transition: transform .06s ease, background .12s ease, border-color .12s ease;
+      user-select: none;
+    }
+
+    button:hover {
+      background: rgba(255, 255, 255, .10)
+    }
+
+    button:active {
+      transform: translateY(1px)
+    }
+
+    button.small {
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 13px
+    }
+
+    .stat {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(0, 0, 0, .16);
+      border: 1px solid rgba(255, 255, 255, .08);
+      min-width: 110px;
+    }
+
+    .stat .k {
+      font-size: 12px;
+      color: var(--muted)
+    }
+
+    .stat .v {
+      font-size: 16px;
+      font-weight: 800
+    }
+
+    .eq {
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-start;
+      gap: 14px;
+      padding: 10px;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, .16);
+      border: 1px solid rgba(255, 255, 255, .08);
+      flex-wrap: wrap;
+    }
+
+    .frac {
+      display: inline-grid;
+      grid-template-rows: auto auto;
+      justify-items: center;
+      align-items: center;
+      font-weight: 900;
+      letter-spacing: .2px;
+      min-width: 38px;
+    }
+
+    .frac .top {
+      font-size: 26px;
+      line-height: 1
+    }
+
+    .frac .bar {
+      width: 42px;
+      height: 2px;
+      background: rgba(231, 238, 252, .7);
+      margin: 4px 0
+    }
+
+    .frac .bot {
+      font-size: 26px;
+      line-height: 1
+    }
+
+    .op {
+      font-size: 28px;
+      font-weight: 900;
+      opacity: .9
+    }
+
+    .choices {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .choice {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      background: rgba(0, 0, 0, .14);
+    }
+
+    .choice:hover {
+      border-color: rgba(110, 168, 254, .35)
+    }
+
+    .badge {
+      font-size: 12px;
+      font-weight: 800;
+      padding: 5px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, .14);
+      background: rgba(255, 255, 255, .06);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    #goalTarget {
+      white-space: normal;
+      max-width: 520px;
+      line-height: 1.25;
+      text-align: left;
+    }
+
+    .badge.good {
+      border-color: rgba(48, 209, 88, .35);
+      background: rgba(48, 209, 88, .10);
+      color: var(--text);
+    }
+
+    .badge.bad {
+      border-color: rgba(255, 69, 58, .34);
+      background: rgba(255, 69, 58, .09);
+      color: var(--text);
+    }
+
+    canvas {
+      width: 100%;
+      height: 520px;
+      display: block;
+      background: linear-gradient(180deg, #0d3b1e 0%, #0b2b18 60%, #0a2314 100%);
+    }
+
+    @media (max-width: 980px) {
+      canvas {
+        height: 420px;
+      }
+    }
+
+    .kbd {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, .16);
+      background: rgba(255, 255, 255, .06);
+      color: var(--muted);
+    }
+
+    .divider {
+      height: 1px;
+      background: rgba(255, 255, 255, .08);
+      margin: 12px 0
+    }
+
+    .slider {
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    input[type="range"] {
+      width: 160px
+    }
+
+    .mul {
+      color: var(--warn);
+      font-weight: 950;
+      font-size: 16px;
+      margin-left: 2px;
+    }
+
+    .mul.small {
+      font-size: 14px;
+      opacity: .95
+    }
+
+    /* Additional */
+    .site-header {
+      padding: 14px 18px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+      background: linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, 0));
+      position: sticky;
+      top: 0;
+      backdrop-filter: blur(8px);
+    }
+
+    .crumbs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      min-width: 0;
+    }
+
+    .crumb {
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 750;
+      font-size: 13px;
+      opacity: .92;
+    }
+
+    .crumb:hover {
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .sep {
+      color: rgba(231, 238, 252, .45);
+    }
+
+    .crumb.current {
+      opacity: 1;
+    }
+
+    .hint {
+      margin-left: 6px;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    @media (max-width: 900px) {
+      .site-header {
+        grid-template-columns: 1fr;
+      }
+
+      .controls {
+        justify-content: flex-start;
+      }
+
+      input[type="range"] {
+        width: 140px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!--
+  <header>
+    <h1>Football Fractions ⚽ <span class="pill">Use <span class="kbd">1–4</span> to choose</span></h1>
+    <div class="row" style="align-items:center">
+      <div class="slider" style="gap:8px">
+        <label for="difficulty" class="pill" style="padding:8px 10px">Difficulty</label>
+        <input id="difficulty" type="range" min="1" max="3" value="1" />
+        <span class="pill" id="diffLabel">Easy</span>
+      </div>
+      <button class="small" id="btnReset" title="Start over">Reset</button>
+    </div>
+  </header>
+-->
+
+  <header class="site-header">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a class="crumb" href="../index.html">Home</a>
+      <span class="sep" aria-hidden="true">›</span>
+      <span class="crumb current" aria-current="page">Football Fractions ⚽</span>
+
+      <!--<span class="pill hint">Use <span class="kbd">1–4</span> to choose</span>-->
+    </nav>
+
+    <div class="controls">
+      <div class="slider">
+        <label for="difficulty" class="pill" style="padding:8px 10px">Difficulty</label>
+        <input id="difficulty" type="range" min="1" max="3" value="1" />
+        <span class="pill" id="diffLabel">Easy</span>
+      </div>
+      <button class="small" id="btnReset" title="Start over">Reset</button>
+    </div>
+  </header>
+
+
+  <main>
+    <section class="card" aria-label="Coach Panel">
+      <div class="hd">
+        <h2>Coach’s Clipboard</h2>
+        <span class="pill" id="levelPill">Level 1</span>
+      </div>
+      <div class="bd">
+        <div class="row" style="justify-content:space-between; align-items:stretch;">
+          <div class="stat">
+            <div class="k">Score</div>
+            <div class="v" id="score">0</div>
+          </div>
+          <div class="stat">
+            <div class="k">Streak</div>
+            <div class="v" id="streak">0</div>
+          </div>
+          <div class="stat">
+            <div class="k">Time</div>
+            <div class="v" id="timer">30</div>
+          </div>
+          <div class="stat">
+            <div class="k">Hearts</div>
+            <div class="v" id="hearts">❤❤❤</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="eq" aria-label="Current fraction problem">
+        <span class="frac" aria-label="first fraction"><span class="top" id="aTop">1</span><span
+            class="bar"></span><span class="bot" id="aBot">2</span></span>
+        <span class="op" id="op">+</span>
+        <span class="frac" aria-label="second fraction"><span class="top" id="bTop">1</span><span
+            class="bar"></span><span class="bot" id="bBot">3</span></span>
+        <span class="op">=</span>
+        <span class="frac" aria-label="result fraction"><span class="top" id="rTop">?</span><span
+            class="bar"></span><span class="bot" id="rBot">?</span></span>
+        <span class="badge" id="goalTarget">Goal kick: Pick the LCM to start the move.</span>
+      </div>
+
+
+      </div>
+
+      <div class="choices" id="choices" aria-label="Answer choices">
+        <!-- buttons inserted here -->
+      </div>
+      </div>
+    </section>
+
+    <section class="card" aria-label="Game Field">
+      <div class="hd">
+        <h2>Pitch</h2>
+        <!--<span class="pill">11v11</span>-->
+      </div>
+      <canvas id="field" width="900" height="520" aria-label="Football field"></canvas>
+    </section>
+  </main>
+
+  <script>
+    // ==============================
+    // Football Fractions: Multi-stage Play
+    // Progress = steps completed (not the current question)
+    // 0: none, 1: LCM found, 2: first converted, 3: second converted, 4: final answer
+    // Phase = current question index (0..3)
+    // ==============================
+
+    const gcd = (x, y) => {
+      x = Math.abs(x); y = Math.abs(y);
+      while (y !== 0) { const t = y; y = x % y; x = t; }
+      return x;
+    };
+    const lcm = (x, y) => (x / gcd(x, y)) * y;
+
+    function simplify(n, d) {
+      if (d === 0) return { n, d };
+      const s = gcd(n, d);
+      n = n / s; d = d / s;
+      if (d < 0) { n *= -1; d *= -1; }
+      return { n, d };
+    }
+    function randomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+    function choiceShuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+    function escapeHtml(s) {
+      return String(s)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    const ui = {
+      score: document.getElementById('score'),
+      streak: document.getElementById('streak'),
+      timer: document.getElementById('timer'),
+      hearts: document.getElementById('hearts'),
+      aTop: document.getElementById('aTop'),
+      aBot: document.getElementById('aBot'),
+      bTop: document.getElementById('bTop'),
+      bBot: document.getElementById('bBot'),
+      rTop: document.getElementById('rTop'),
+      rBot: document.getElementById('rBot'),
+      op: document.getElementById('op'),
+      choices: document.getElementById('choices'),
+      levelPill: document.getElementById('levelPill'),
+      //modePill: document.getElementById('modePill'),
+      btnReset: document.getElementById('btnReset'),
+      difficulty: document.getElementById('difficulty'),
+      diffLabel: document.getElementById('diffLabel'),
+      goalTarget: document.getElementById('goalTarget'),
+    };
+
+    const state = {
+      level: 1,
+      score: 0,
+      streak: 0,
+      hearts: 3,
+      difficulty: 1,
+      current: null,
+      phase: 0,
+      progress: 0,
+      locked: false,
+      stepSeconds: 30,
+      deadlineMs: 0,
+      lastShownSec: null,
+      timedOutLatch: false,
+    };
+
+    function setCoachText(msg, kind = '') {
+      ui.goalTarget.className = 'badge' + (kind ? ' ' + kind : '');
+      ui.goalTarget.textContent = msg;
+    }
+
+    function updateHUD() {
+      ui.score.textContent = String(state.score);
+      ui.streak.textContent = String(state.streak);
+      ui.hearts.textContent = '❤'.repeat(state.hearts) + '♡'.repeat(Math.max(0, 3 - state.hearts));
+      ui.levelPill.textContent = `Level ${state.level}`;
+
+      const labels = { 1: 'Easy', 2: 'Medium', 3: 'Hard' };
+      ui.diffLabel.textContent = labels[state.difficulty] || 'Easy';
+
+      //ui.modePill.textContent = `Training: ${labels[state.difficulty] || 'Easy'}`;
+
+    }
+
+    function startStepTimer() {
+      state.deadlineMs = Date.now() + state.stepSeconds * 1000;
+      state.lastShownSec = null;
+      state.timedOutLatch = false;
+      updateTimerUI();
+    }
+
+    function updateTimerUI() {
+      const leftMs = Math.max(0, state.deadlineMs - Date.now());
+      const leftSec = Math.ceil(leftMs / 1000);
+      if (state.lastShownSec !== leftSec) {
+        state.lastShownSec = leftSec;
+        ui.timer.textContent = String(leftSec);
+      }
+      return leftSec;
+    }
+
+    function makeProblem() {
+
+      let diff;
+
+      if (state.difficulty > 2) {
+        diff = state.difficulty - 1;
+      } else {
+        diff = 1;
+      }
+
+      const denomMax = diff === 1 ? 9 : diff === 2 ? 12 : 16;
+      const denomMin = 2;
+
+      let d1 = randomInt(denomMin, denomMax);
+      let d2 = randomInt(denomMin, denomMax);
+      let tries = 0;
+      while (d2 === d1 && tries < 6) { d2 = randomInt(denomMin, denomMax); tries++; }
+
+      const nMax1 = Math.max(1, Math.floor(d1 * (diff === 3 ? 0.95 : 0.8)));
+      const nMax2 = Math.max(1, Math.floor(d2 * (diff === 3 ? 0.95 : 0.8)));
+      let n1 = randomInt(1, nMax1);
+      let n2 = randomInt(1, nMax2);
+
+      const op = Math.random() < 0.52 ? '+' : '-';
+      if (op === '-' && diff !== 3) {
+        const A = n1 / d1;
+        const B = n2 / d2;
+        if (B > A) {
+          [n1, n2] = [n2, n1];
+          [d1, d2] = [d2, d1];
+        }
+      }
+
+      if (Math.random() < 0.25) { const s1 = simplify(n1, d1); n1 = s1.n; d1 = s1.d; }
+      if (Math.random() < 0.25) { const s2 = simplify(n2, d2); n2 = s2.n; d2 = s2.d; }
+
+      const common = lcm(d1, d2);
+      const aMul = common / d1;
+      const bMul = common / d2;
+      const an = n1 * aMul;
+      const bn = n2 * bMul;
+      const rn = op === '+' ? (an + bn) : (an - bn);
+
+      const answer = (diff === 3) ? simplify(rn, common) : { n: rn, d: common };
+
+      return { n1, d1, n2, d2, op, common, aMul, bMul, an, bn, raw: { n: rn, d: common }, answer: answer };
+    }
+
+    const PHASE = [
+      { name: 'Goal kick' },
+      { name: 'Defence → Midfield' },
+      { name: 'Midfield → Attack' },
+      { name: 'Finish!' },
+    ];
+
+    function stagePromptText(p) {
+      if (state.phase === 0) {
+        return `What is the LCM of ${p.d1} and ${p.d2} (This will be the new denominator)?`;
+      }
+      if (state.phase === 1) {
+        return `Convert the FIRST fraction (${p.n1}/${p.d1}) to the LCM of ${p.common}.`;
+      }
+      if (state.phase === 2) {
+        return `Convert the SECOND fraction (${p.n2}/${p.d2}) to the LCM of ${p.common}.`;
+      }
+
+      let text = `Now the denominators match (${p.common}). ${p.op === '+' ? 'Add' : 'Subtract'} the numerators`;
+
+      if (state.difficulty > 1) {
+        text += ' and simplify the answer.';
+      } else {
+        text += '.';
+      }
+
+      return text;
+
+    }
+
+    function buildStageOptions(p) {
+      if (state.phase === 0) {
+        const correct = p.common;
+        const candidates = new Set([correct]);
+        const wrongs = [p.d1 + p.d2, p.d1 * p.d2, Math.max(p.d1, p.d2), Math.abs(p.d1 - p.d2) || 1, correct + p.d1, correct + p.d2];
+        while (candidates.size < 4) {
+          const w = wrongs.length ? wrongs.shift() : randomInt(2, Math.max(20, correct + 10));
+          if (w > 1) candidates.add(w);
+        }
+        return choiceShuffle([...candidates].slice(0, 4).map(v => ({ label: String(v), isCorrect: v === correct })));
+      }
+
+      if (state.phase === 1) {
+        const correctKey = `${p.an}/${p.common}`;
+        const seen = new Set([correctKey]);
+        const wrongs = [`${p.n1}/${p.common}`, `${p.n1 * p.d2}/${p.common}`, `${p.n1 * (p.aMul + 1)}/${p.common}`, `${p.n1 * Math.max(1, p.aMul - 1)}/${p.common}`];
+        const arr = [{ label: correctKey, isCorrect: true }];
+        while (arr.length < 4) {
+          const cand = wrongs.length ? wrongs.shift() : `${p.an + randomInt(-5, 5)}/${p.common}`;
+          if (!seen.has(cand)) {
+            arr.push({ label: cand, isCorrect: false });
+            seen.add(cand);
+          }
+        }
+        return choiceShuffle(arr);
+      }
+
+      if (state.phase === 2) {
+        const correctKey = `${p.bn}/${p.common}`;
+        const seen = new Set([correctKey]);
+        const wrongs = [`${p.n2}/${p.common}`, `${p.n2 * p.d1}/${p.common}`, `${p.n2 * (p.bMul + 1)}/${p.common}`, `${p.n2 * Math.max(1, p.bMul - 1)}/${p.common}`];
+        const arr = [{ label: correctKey, isCorrect: true }];
+        while (arr.length < 4) {
+          const cand = wrongs.length ? wrongs.shift() : `${p.bn + randomInt(-5, 5)}/${p.common}`;
+          if (!seen.has(cand)) {
+            arr.push({ label: cand, isCorrect: false });
+            seen.add(cand);
+          }
+        }
+        return choiceShuffle(arr);
+      }
+
+      const correctKey = `${p.answer.n}/${p.answer.d}`;
+      const seen = new Set([correctKey]);
+      const wrong1 = simplify(p.op === '+' ? (p.n1 + p.n2) : (p.n1 - p.n2), p.d1 + p.d2);
+      const wrong2 = simplify(p.op === '+' ? (p.n1 + p.n2) : (p.n1 - p.n2), p.common);
+      const wrong3 = simplify(p.raw.n, p.raw.d);
+      const candidates = [wrong1, wrong2, wrong3].map(x => simplify(x.n, x.d)).filter(x => !seen.has(`${x.n}/${x.d}`));
+      const arr = [{ label: correctKey, isCorrect: true }];
+      for (const c of candidates) {
+        if (arr.length >= 4) break;
+        const k = `${c.n}/${c.d}`;
+        if (!seen.has(k)) {
+          arr.push({ label: k, isCorrect: false });
+          seen.add(k);
+        }
+      }
+      while (arr.length < 4) {
+        const tweakN = p.answer.n + randomInt(-4, 4);
+        const tweakD = Math.max(2, p.answer.d + randomInt(-3, 3));
+        const t = simplify(tweakN === 0 ? 1 : tweakN, tweakD);
+        const k = `${t.n}/${t.d}`;
+        if (!seen.has(k)) {
+          arr.push({ label: k, isCorrect: false });
+          seen.add(k);
+        }
+      }
+      return choiceShuffle(arr);
+    }
+
+    function updateEquationForProgress(p) {
+      // Progress indicates what has been COMPLETED.
+      // progress 0: show original
+      // progress 1: LCM known (show originals, but show LCM in coach text)
+      // progress 2: first converted
+      // progress 3: second converted
+      // progress 4: show final answer
+      const showFirstConverted = state.progress >= 2;
+      const showSecondConverted = state.progress >= 3;
+
+      // During the *conversion question*, show the required multiplication inline
+      const showMulFirst = !showFirstConverted && state.phase === 1;
+      const showMulSecond = !showSecondConverted && state.phase === 2;
+
+      if (showMulFirst && state.difficulty == 1) {
+        ui.aTop.innerHTML = `${p.n1}<span class="mul">×${p.aMul}</span>`;
+        ui.aBot.innerHTML = `${p.d1}<span class="mul">×${p.aMul}</span>`;
+      } else {
+        ui.aTop.textContent = String(showFirstConverted ? p.an : p.n1);
+        ui.aBot.textContent = String(showFirstConverted ? p.common : p.d1);
+      }
+
+      if (showMulSecond && state.difficulty == 1) {
+        ui.bTop.innerHTML = `${p.n2}<span class="mul">×${p.bMul}</span>`;
+        ui.bBot.innerHTML = `${p.d2}<span class="mul">×${p.bMul}</span>`;
+      } else {
+        ui.bTop.textContent = String(showSecondConverted ? p.bn : p.n2);
+        ui.bBot.textContent = String(showSecondConverted ? p.common : p.d2);
+      }
+
+      ui.op.textContent = p.op;
+
+      if (state.progress >= 4) {
+        ui.rTop.textContent = String(p.answer.n);
+        ui.rBot.textContent = String(p.answer.d);
+      } else {
+        ui.rTop.textContent = '?';
+        ui.rBot.textContent = '?';
+      }
+    }
+
+    function renderBoard() {
+      const p = state.current;
+      updateEquationForProgress(p);
+
+      const phaseMeta = PHASE[state.phase];
+      //const lcmPart = (state.progress >= 1) ? ` (LCM = ${p.common})` : '';
+      //setCoachText(`${phaseMeta.name}: ${stagePromptText(p)}${lcmPart}`, '');
+
+      //setCoachText(`${stagePromptText(p)}${lcmPart}`, '');
+
+      setCoachText(`${stagePromptText(p)}`, '');
+
+      const options = buildStageOptions(p);
+      ui.choices.innerHTML = '';
+      options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'choice';
+        btn.type = 'button';
+        btn.dataset.correct = opt.isCorrect ? '1' : '0';
+        btn.dataset.label = opt.label;
+        btn.innerHTML = `
+          <div style="display:flex; align-items:center; gap:12px">
+            <span class="badge">${idx + 1}</span>
+            <span style="font-size:18px; font-weight:900">${escapeHtml(opt.label)}</span>
+          </div>
+          <span class="badge">Play</span>
+        `;
+        btn.addEventListener('click', () => chooseAnswer(btn));
+        ui.choices.appendChild(btn);
+      });
+
+      updateHUD();
+      lockChoices(false);
+      startStepTimer();
+    }
+
+    // ==============================
+    // Pitch: 11v11 moving players
+    // ==============================
+    const canvas = document.getElementById('field');
+    const ctx = canvas.getContext('2d');
+
+    const pitch = {
+      w: canvas.width,
+      h: canvas.height,
+      bounds: { x: 18, y: 18, w: canvas.width - 36, h: canvas.height - 36 },
+      goal: { x: 770, y: 165, w: 95, h: 190 },
+      ownGoal: { x: 18, y: 165, w: 95, h: 190 },
+    };
+
+    const field = {
+      ball: { x: 50, y: 260, r: 8 },
+      pts: [
+        { x: 50, y: 260 },
+        { x: 320, y: 330 },
+        { x: 500, y: 300 },
+        { x: 660, y: 280 },
+        { x: 850, y: 260 },
+      ],
+      shot: null,
+      spark: [],
+      msg: null,
+      teams: { home: [], away: [] },
+    };
+
+    function initTeams() {
+      field.teams.home = [];
+      field.teams.away = [];
+
+      // Home team (attacking left→right)
+
+      // put keeper in goal
+
+      field.teams.home.push({
+        x: pitch.ownGoal.x + 10,
+        y: pitch.ownGoal.y + pitch.ownGoal.h / 2,
+        vx: 0,
+        vy: 0,
+        r: 8,
+      });
+
+      for (let i = 1; i < 11; i++) {
+        field.teams.home.push({
+          x: 140 + randomInt(-40, 240),
+          y: 120 + i * 28 + randomInt(-10, 10),
+          vx: 0,
+          vy: 0,
+          r: 8,
+        });
+      }
+
+      // Away team (defending)
+
+      // put keeper in goal
+      field.teams.away.push({
+        x: pitch.goal.x + pitch.goal.w - 10,
+        y: pitch.goal.y + pitch.goal.h / 2,
+        vx: 0,
+        vy: 0,
+        r: 8,
+      });
+
+      for (let i = 1; i < 11; i++) {
+        field.teams.away.push({
+          x: 560 + randomInt(-40, 260),
+          y: 120 + i * 28 + randomInt(-10, 10),
+          vx: (Math.random() * 0.6 - 0.3),
+          vy: (Math.random() * 0.6 - 0.3),
+          r: 8,
+        });
+      }
+    }
+
+    function stepPlayers() {
+      const b = pitch.bounds;
+      const pad = 26;
+
+      const stepTeam = (arr) => {
+        for (var i = 0; i < arr.length; i++) {
+
+          if (i == 0) {
+            continue;
+          }
+
+          const p = arr[i];
+
+          // gentle wandering
+          if (Math.random() < 0.03) {
+            p.vx += (Math.random() * 0.4 - 0.2);
+            p.vy += (Math.random() * 0.4 - 0.2);
+          }
+          // clamp speed
+          p.vx = Math.max(-0.9, Math.min(0.9, p.vx));
+          p.vy = Math.max(-0.9, Math.min(0.9, p.vy));
+
+          p.x += p.vx;
+          p.y += p.vy;
+
+          // bounce within pitch
+          const minX = b.x + pad;
+          const maxX = b.x + b.w - pad;
+          const minY = b.y + pad;
+          const maxY = b.y + b.h - pad;
+
+          if (p.x < minX) { p.x = minX; p.vx *= -0.9; }
+          if (p.x > maxX) { p.x = maxX; p.vx *= -0.9; }
+          if (p.y < minY) { p.y = minY; p.vy *= -0.9; }
+          if (p.y > maxY) { p.y = maxY; p.vy *= -0.9; }
+        }
+      };
+
+      stepTeam(field.teams.home);
+      stepTeam(field.teams.away);
+    }
+
+    function resetPlayToStart() {
+      state.phase = 0;
+      state.progress = 0;
+      state.deadlineMs = 0;
+      state.lastShownSec = null;
+      state.timedOutLatch = false;
+      field.ball.x = field.pts[0].x;
+      field.ball.y = field.pts[0].y;
+      field.shot = null;
+    }
+
+    function lockChoices(lock) {
+      [...ui.choices.querySelectorAll('button')].forEach(b => b.disabled = lock);
+    }
+
+    function moveBallToNext(successLabel) {
+      const from = field.pts[state.phase];
+      const to = field.pts[state.phase + 1];
+      if (!to) return;
+
+      const time = 34;
+      const vx = (to.x - from.x) / time;
+      const vy = (to.y - from.y) / time;
+
+      field.ball.x = from.x;
+      field.ball.y = from.y;
+      field.shot = { vx, vy, t: 0, time, kind: 'move', label: successLabel };
+      field.spark.push({ x: field.ball.x, y: field.ball.y, t: 0, life: 18 });
+    }
+
+    function finishShot(successLabel, wasGoal) {
+      const targetX = wasGoal
+        ? pitch.goal.x + pitch.goal.w * (0.35 + Math.random() * 0.45)
+        : pitch.goal.x - 30;
+      const targetY = wasGoal
+        ? pitch.goal.y + pitch.goal.h * (0.25 + Math.random() * 0.5)
+        : pitch.goal.y + pitch.goal.h * (0.2 + Math.random() * 0.6);
+
+      const time = 48;
+      const vx = (targetX - field.ball.x) / time;
+      const vy = (targetY - field.ball.y) / time;
+
+      field.shot = { vx, vy, t: 0, time, kind: wasGoal ? 'goal' : 'save', label: successLabel };
+      field.spark.push({ x: field.ball.x, y: field.ball.y, t: 0, life: 22 });
+    }
+
+    function drawPitch() {
+      ctx.clearRect(0, 0, pitch.w, pitch.h);
+
+      // stripes
+      for (let i = 0; i < 10; i++) {
+        ctx.globalAlpha = 0.08;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, i * 60 + (i % 2 ? 0 : 12), pitch.w, 34);
+      }
+      ctx.globalAlpha = 1;
+
+      // boundary
+      ctx.strokeStyle = 'rgba(255,255,255,.22)';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(18, 18, pitch.w - 36, pitch.h - 36);
+
+      // midline
+      ctx.beginPath();
+      ctx.moveTo(pitch.w / 2, 18);
+      ctx.lineTo(pitch.w / 2, pitch.h - 18);
+      ctx.stroke();
+
+      // penalty area
+      ctx.strokeRect(610, 110, 250, 300);
+      ctx.strokeRect(18, 110, 250, 300);
+
+      // goal
+      ctx.strokeStyle = 'rgba(255,255,255,.55)';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(pitch.goal.x, pitch.goal.y, pitch.goal.w, pitch.goal.h);
+      ctx.strokeRect(pitch.ownGoal.x, pitch.ownGoal.y, pitch.ownGoal.w, pitch.ownGoal.h);
+      // net
+      ctx.globalAlpha = 0.25;
+      ctx.lineWidth = 1;
+      for (let x = pitch.goal.x; x <= pitch.goal.x + pitch.goal.w; x += 10) {
+        ctx.beginPath(); ctx.moveTo(x, pitch.goal.y); ctx.lineTo(x, pitch.goal.y + pitch.goal.h); ctx.stroke();
+      }
+      for (let y = pitch.goal.y; y <= pitch.goal.y + pitch.goal.h; y += 10) {
+        ctx.beginPath(); ctx.moveTo(pitch.goal.x, y); ctx.lineTo(pitch.goal.x + pitch.goal.w, y); ctx.stroke();
+      }
+
+      for (let x = pitch.ownGoal.x; x <= pitch.ownGoal.x + pitch.ownGoal.w; x += 10) {
+        ctx.beginPath(); ctx.moveTo(x, pitch.ownGoal.y); ctx.lineTo(x, pitch.ownGoal.y + pitch.ownGoal.h); ctx.stroke();
+      }
+      for (let y = pitch.ownGoal.y; y <= pitch.ownGoal.y + pitch.ownGoal.h; y += 10) {
+        ctx.beginPath(); ctx.moveTo(pitch.ownGoal.x, y); ctx.lineTo(pitch.ownGoal.x + pitch.ownGoal.w, y); ctx.stroke();
+      }
+
+      ctx.globalAlpha = 1;
+
+      // waypoints
+      ctx.globalAlpha = 0.22;
+      ctx.fillStyle = '#ffffff';
+      field.pts.forEach((p, idx) => {
+        ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI * 2); ctx.fill();
+        if (idx === state.phase) {
+          ctx.globalAlpha = 0.5;
+          ctx.beginPath(); ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(255,255,255,.55)';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.globalAlpha = 0.22;
+        }
+      });
+      ctx.globalAlpha = 1;
+
+      // players
+      const drawTeam = (arr, fill, stroke) => {
+
+        for (var i = 0; i < arr.length; i++) {
+
+          const p = arr[i];
+
+          if (i === 0) {
+            // goalkeeper yellow
+            ctx.fillStyle = 'rgba(255, 223, 0, .85)';
+          } else {
+            ctx.fillStyle = fill;
+          }
+
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fill();
+
+          if (stroke) {
+            ctx.strokeStyle = stroke;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+          }
+
+        }
+
+      };
+
+      // home = white, away = accent outline
+      drawTeam(field.teams.away, 'rgba(110,168,254,.28)', 'rgba(110,168,254,.85)');
+      drawTeam(field.teams.home, 'rgba(255,0,0,.85)', 'rgba(255,0,0,.85)');
+
+      // sparks
+      for (const s of field.spark) {
+        const a = Math.max(0, (s.life - s.t) / s.life);
+        ctx.globalAlpha = a * 0.8;
+        ctx.fillStyle = 'rgba(255,255,255,.9)';
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
+      // ball
+      ctx.fillStyle = 'rgba(255,255,255,.95)';
+      ctx.beginPath();
+      ctx.arc(field.ball.x, field.ball.y, field.ball.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,.35)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      if (field.shot && field.shot.label) {
+        ctx.fillStyle = 'rgba(0,0,0,.55)';
+        ctx.font = '800 12px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText(field.shot.label, field.ball.x, field.ball.y + 4);
+      }
+
+      if (field.msg) {
+        const a = Math.max(0, 1 - field.msg.t / 90);
+        ctx.globalAlpha = a;
+        ctx.fillStyle = 'rgba(0,0,0,.35)';
+        ctx.fillRect(22, 22, 310, 44);
+        ctx.fillStyle = 'rgba(231,238,252,.95)';
+        ctx.font = '900 18px system-ui';
+        ctx.textAlign = 'left';
+        ctx.fillText(field.msg.text, 36, 52);
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    function tick() {
+
+      // timer
+      if (state.deadlineMs && state.hearts > 0) {
+        const left = updateTimerUI();
+        if (left <= 0 && !state.timedOutLatch && !state.locked && state.hearts > 0) {
+          state.timedOutLatch = true;
+          // Time up behaves like a wrong answer
+          state.locked = true;
+          lockChoices(true);
+          state.streak = 0;
+          state.hearts = Math.max(0, state.hearts - 1);
+
+          if (state.hearts <= 0) {
+            setCoachText('Out of hearts. Hit Reset to start again.', 'bad');
+            return;
+          }
+
+          setCoachText(`Time's up! ⏱ Back to Goal kick.`, 'bad');
+          // set phase to 0 to indicate restart from beginning
+          state.phase = 0;
+          updateHUD();
+          finishShot('⏱', false);
+        }
+      }
+
+      if (field.shot) {
+
+        stepPlayers();
+
+        field.ball.x += field.shot.vx;
+        field.ball.y += field.shot.vy;
+        field.shot.t++;
+        field.spark.push({ x: field.ball.x, y: field.ball.y, t: 0, life: field.shot.kind === 'move' ? 14 : 22 });
+
+        if (field.shot.t >= field.shot.time) {
+          const kind = field.shot.kind;
+          field.shot = null;
+
+          if (kind === 'move') {
+            setTimeout(() => {
+              state.locked = false;
+              renderBoard();
+            }, 120);
+          }
+          if (kind === 'goal') {
+            field.msg = { text: 'GOAL! ⚽', t: 0 };
+            setTimeout(() => resetForNextProblem(), 650);
+          }
+          if (kind === 'save') {
+            field.msg = { text: 'Saved! 🧤', t: 0 };
+            setTimeout(() => {
+              state.locked = false;
+              resetPlayToStart();
+              renderBoard();
+            }, 650);
+          }
+        }
+      }
+
+      for (const s of field.spark) s.t++;
+      field.spark = field.spark.filter(s => s.t < s.life);
+      if (field.msg) {
+        field.msg.t++;
+        if (field.msg.t > 90) field.msg = null;
+      }
+
+      drawPitch();
+      requestAnimationFrame(tick);
+    }
+
+    // ==============================
+    // Game Logic
+    // ==============================
+    function chooseAnswer(btn) {
+      if (state.locked || !state.current) return;
+      state.locked = true;
+      lockChoices(true);
+
+      const correct = btn.dataset.correct === '1';
+      const label = btn.dataset.label || '';
+
+      if (correct) {
+        // Mark current step as completed
+        state.progress = Math.max(state.progress, state.phase + 1);
+
+        // IMPORTANT: Do NOT change the shown fractions just because LCM was found.
+        // Fractions only update when a conversion step is completed.
+        updateEquationForProgress(state.current);
+
+        if (state.phase < 3) {
+          state.score += 2;
+          setCoachText('Correct! Move the ball up the pitch…', 'good');
+          moveBallToNext(label);
+          state.phase += 1;
+          updateHUD();
+          // renderBoard() will be called after the move animation finishes, and it restarts the timer.
+          return;
+        }
+
+        // Final stage complete
+        state.progress = 4;
+        updateEquationForProgress(state.current);
+        state.score += 10;
+        state.streak += 1;
+        if (state.streak % 5 === 0) state.level += 1;
+        updateHUD();
+        setCoachText('GOAL! ✅ Great finish — same denominator, then simplify.', 'good');
+        field.ball.x = field.pts[4].x;
+        field.ball.y = field.pts[4].y;
+        finishShot(label, true);
+        return;
+      } else {
+
+        // Wrong: restart from goal kick (same problem) + streak breaks
+        state.streak = 0;
+        state.hearts = Math.max(0, state.hearts - 1);
+
+        if (state.hearts <= 0) {
+          setCoachText('Out of hearts. Hit Reset to start again.', 'bad');
+          state.locked = true;
+          lockChoices(true);
+          updateHUD();
+          return;
+        }
+
+        const phaseName = PHASE[state.phase].name;
+        setCoachText(`Oops — that was the ${phaseName} step. Back to Goal kick.`, 'bad');
+        updateHUD();
+        finishShot(label, false);
+
+      }
+
+    }
+
+    function resetForNextProblem() {
+      if (state.hearts <= 0) {
+        setCoachText('Out of hearts. Hit Reset to start again.', 'bad');
+        state.locked = true;
+        lockChoices(true);
+        return;
+      }
+      resetPlayToStart();
+      state.current = makeProblem();
+      renderBoard();
+      state.locked = false;
+    }
+
+    function resetGame() {
+      state.level = 1;
+      state.score = 0;
+      state.streak = 0;
+      state.hearts = 3;
+      state.locked = false;
+      resetPlayToStart();
+      state.current = makeProblem();
+      renderBoard();
+      updateHUD();
+    }
+
+    ui.difficulty.addEventListener('input', () => {
+      state.difficulty = Number(ui.difficulty.value);
+      resetGame();
+    });
+
+    ui.btnReset.addEventListener('click', resetGame);
+
+    window.addEventListener('keydown', (e) => {
+      if (['1', '2', '3', '4'].includes(e.key)) {
+        const idx = Number(e.key) - 1;
+        const btns = [...ui.choices.querySelectorAll('button')];
+        if (btns[idx] && !btns[idx].disabled) btns[idx].click();
+      }
+      if (e.key === 'r' || e.key === 'R') resetGame();
+    });
+
+    // Start
+    state.difficulty = Number(ui.difficulty.value);
+    initTeams();
+    updateHUD();
+    state.current = makeProblem();
+    renderBoard();
+    tick();
+  </script>
+</body>
+
+</html>
