@@ -907,8 +907,8 @@
 
       for (let i = 1; i < 11; i++) {
 
-        x = 560 + randomInt(-40, 260);
-        y = 120 + i * 28 + randomInt(-10, 10);
+        const x = 560 + randomInt(-40, 260);
+        const y = 120 + i * 28 + randomInt(-10, 10);
 
         field.teams.away.push({
           x: x,
@@ -956,12 +956,34 @@
         if (p.y > maxY) p.y = maxY;
       }
 
-      // ---------- HOME TEAM ----------
+      // Gentle wander step (keeps your original vibe)
+      function wander(p, maxSpeed = 0.9) {
+        if (Math.random() < 0.03) {
+          p.vx += (Math.random() * 0.4 - 0.2);
+          p.vy += (Math.random() * 0.4 - 0.2);
+        }
+        p.vx = clamp(p.vx, -maxSpeed, maxSpeed);
+        p.vy = clamp(p.vy, -maxSpeed, maxSpeed);
+        p.x += p.vx;
+        p.y += p.vy;
+
+        const minX = b.x + pad, maxX = b.x + b.w - pad;
+        const minY = b.y + pad, maxY = b.y + b.h - pad;
+        if (p.x < minX) { p.x = minX; p.vx *= -0.9; }
+        if (p.x > maxX) { p.x = maxX; p.vx *= -0.9; }
+        if (p.y < minY) { p.y = minY; p.vy *= -0.9; }
+        if (p.y > maxY) { p.y = maxY; p.vy *= -0.9; }
+      }
+
+      // -------------------
+      // HOME TEAM
+      // -------------------
       const home = field.teams.home;
 
-      // keeper: mostly fixed
+      // Keeper: mostly fixed
       if (home[0]) {
-        arrive(home[0],
+        arrive(
+          home[0],
           pitch.ownGoal.x + 12,
           pitch.ownGoal.y + pitch.ownGoal.h / 2,
           25,
@@ -969,79 +991,91 @@
         );
       }
 
-      const passInFlight = field.shot && field.shot.kind === 'move';
+      const shot = field.shot || null;
+      const shotActive = !!shot;
+      const isPass = shotActive && shot.kind === 'move';
 
-      if (passInFlight) {
-        const shot = field.shot;
+      // Always during ANY shot (move/goal/save): keep ONE home outfielder near the ball
+      // (prevents "ball flying alone" on final shot)
+      let chaserIdx = 1;
+      if (home.length > 2) {
+        let best = Infinity;
+        for (let i = 1; i < home.length; i++) {
+          const p = home[i];
+          const dx = p.x - field.ball.x;
+          const dy = p.y - field.ball.y;
+          const d2 = dx * dx + dy * dy;
+          if (d2 < best) { best = d2; chaserIdx = i; }
+        }
+      }
+
+      if (shotActive) {
+        const framesLeft = Math.max(1, shot.time - shot.t);
+        const chaser = home[chaserIdx];
+        if (chaser) {
+          // sit just behind the ball
+          arrive(chaser, field.ball.x - 14, field.ball.y, Math.min(18, framesLeft), 2.8);
+        }
+      }
+
+      if (isPass) {
         const framesLeft = Math.max(1, shot.time - shot.t);
 
         const kicker = (shot.kickerIdx != null) ? home[shot.kickerIdx] : null;
         const receiver = (shot.receiverIdx != null) ? home[shot.receiverIdx] : null;
         const runner = (shot.runnerIdx != null) ? home[shot.runnerIdx] : null;
 
-        // 1) Receiver to N+1 (be there to collect the pass)
+        // Receiver to N+1 target
         if (receiver && shot.tx != null) {
-          // small offset so it looks like they "check to" the ball rather than stand on a dot
           const yOff = (shot.receiverIdx % 2 ? 14 : -14);
-          arrive(receiver, shot.tx - 6, shot.ty + yOff, framesLeft, 2.8);
+          arrive(receiver, shot.tx - 6, shot.ty + yOff, framesLeft, 2.9);
         }
 
-        // 2) Runner to N+2 (next option upfield)
+        // Runner to N+2 target (if exists)
         if (runner && shot.tx2 != null) {
-          // arrive a touch later than receiver for natural spacing
           const yOff2 = (shot.runnerIdx % 2 ? 22 : -22);
-          arrive(runner, shot.tx2 - 10, shot.ty2 + yOff2, Math.max(1, framesLeft + 10), 2.5);
+          arrive(runner, shot.tx2 - 10, shot.ty2 + yOff2, Math.max(1, framesLeft + 10), 2.6);
         }
 
-        // 3) Kicker jogs after the pass / stays near play
+        // Kicker jogs after the pass
         if (kicker) {
-          arrive(kicker, field.ball.x - 18, field.ball.y, 18, 2.2);
+          arrive(kicker, field.ball.x - 18, field.ball.y, 18, 2.3);
         }
 
-        // 4) Everyone else pushes up into support lanes
+        // Other outfielders push up in support lanes
         for (let i = 1; i < home.length; i++) {
           if (i === shot.kickerIdx || i === shot.receiverIdx || i === shot.runnerIdx) continue;
+          if (i === chaserIdx) continue;
+
           const p = home[i];
-
-          // push target: behind the ball a bit, but advancing as the ball advances
           const tx = Math.min(field.ball.x + 90, p.x + 1.4);
-          // keep their current lane, slight life
           const ty = p.y + (Math.random() * 0.8 - 0.4);
-
           arrive(p, tx, ty, 55, 1.6);
         }
 
-      } else {
-        // No pass: gentle wandering like your original
+      } else if (!shotActive) {
+        // No shot: gentle wandering
         for (let i = 1; i < home.length; i++) {
+          wander(home[i], 0.9);
+        }
+      } else {
+        // Goal/save shot: team follows in a bit (chaser already near ball)
+        for (let i = 1; i < home.length; i++) {
+          if (i === chaserIdx) continue;
           const p = home[i];
-
-          if (Math.random() < 0.03) {
-            p.vx += (Math.random() * 0.4 - 0.2);
-            p.vy += (Math.random() * 0.4 - 0.2);
-          }
-          p.vx = clamp(p.vx, -0.9, 0.9);
-          p.vy = clamp(p.vy, -0.9, 0.9);
-
-          p.x += p.vx;
-          p.y += p.vy;
-
-          const minX = b.x + pad, maxX = b.x + b.w - pad;
-          const minY = b.y + pad, maxY = b.y + b.h - pad;
-
-          if (p.x < minX) { p.x = minX; p.vx *= -0.9; }
-          if (p.x > maxX) { p.x = maxX; p.vx *= -0.9; }
-          if (p.y < minY) { p.y = minY; p.vy *= -0.9; }
-          if (p.y > maxY) { p.y = maxY; p.vy *= -0.9; }
+          arrive(p, Math.min(field.ball.x + 60, p.x + 0.8), p.y, 70, 1.2);
         }
       }
 
-      // ---------- AWAY TEAM ----------
+      // -------------------
+      // AWAY TEAM
+      // -------------------
       const away = field.teams.away;
 
-      // away keeper: mostly fixed
+      // Away keeper: mostly fixed
       if (away[0]) {
-        arrive(away[0],
+        arrive(
+          away[0],
           pitch.goal.x + pitch.goal.w - 12,
           pitch.goal.y + pitch.goal.h / 2,
           25,
@@ -1049,11 +1083,10 @@
         );
       }
 
-      // away outfield: light defending / wandering
+      // Away outfielders: mild defending / wandering
       for (let i = 1; i < away.length; i++) {
         const p = away[i];
 
-        // mild bias toward ball so defenders feel responsive
         const biasX = (field.ball.x - p.x) * 0.0008;
         const biasY = (field.ball.y - p.y) * 0.0008;
 
@@ -1082,6 +1115,7 @@
     }
 
 
+
     function resetPlayToStart() {
       state.phase = 0;
       state.progress = 0;
@@ -1102,7 +1136,7 @@
       const to = field.pts[state.phase + 1];
       if (!to) return;
 
-      const to2 = field.pts[state.phase + 2] || null; // ✅ N+2 target if it exists
+      const to2 = field.pts[state.phase + 2] || null;
 
       const time = 34;
       const vx = (to.x - from.x) / time;
@@ -1127,7 +1161,7 @@
         if (d2 < bestR) { bestR = d2; receiverIdx = i; }
       }
 
-      // choose runner: nearest home outfield player to N+2 target (if it exists)
+      // choose runner: nearest home outfield player to N+2 target (if exists)
       let runnerIdx = null;
       if (to2) {
         let best2 = Infinity;
@@ -1147,14 +1181,13 @@
       field.ball.x = from.x;
       field.ball.y = from.y;
 
-      // ✅ store both targets + chosen players
       field.shot = {
         vx, vy, t: 0, time,
         kind: 'move',
         label: successLabel,
 
-        tx: to.x, ty: to.y,              // N+1
-        tx2: to2 ? to2.x : null,          // N+2 (maybe)
+        tx: to.x, ty: to.y,
+        tx2: to2 ? to2.x : null,
         ty2: to2 ? to2.y : null,
 
         kickerIdx,
@@ -1166,21 +1199,40 @@
     }
 
 
+
     function finishShot(successLabel, wasGoal) {
+      const startX = field.ball.x;
+      const startY = field.ball.y;
+
       const targetX = wasGoal
         ? pitch.goal.x + pitch.goal.w * (0.35 + Math.random() * 0.45)
         : pitch.goal.x - 30;
+
       const targetY = wasGoal
         ? pitch.goal.y + pitch.goal.h * (0.25 + Math.random() * 0.5)
         : pitch.goal.y + pitch.goal.h * (0.2 + Math.random() * 0.6);
 
-      const time = 48;
-      const vx = (targetX - field.ball.x) / time;
-      const vy = (targetY - field.ball.y) / time;
+      const time = 54; // smoother than 48
 
-      field.shot = { vx, vy, t: 0, time, kind: wasGoal ? 'goal' : 'save', label: successLabel };
+      // quadratic Bézier control point for an arc
+      const midX = (startX + targetX) / 2;
+      const lift = 70 + Math.random() * 40;
+      const ctrlX = midX;
+      const ctrlY = Math.min(startY, targetY) - lift;
+
+      field.shot = {
+        kind: wasGoal ? 'goal' : 'save',
+        label: successLabel,
+        t: 0,
+        time,
+        x0: startX, y0: startY,
+        cx: ctrlX, cy: ctrlY,
+        x1: targetX, y1: targetY
+      };
+
       field.spark.push({ x: field.ball.x, y: field.ball.y, t: 0, life: 22 });
     }
+
 
     function drawPitch() {
       ctx.clearRect(0, 0, pitch.w, pitch.h);
@@ -1350,9 +1402,19 @@
 
         stepPlayers();
 
-        field.ball.x += field.shot.vx;
-        field.ball.y += field.shot.vy;
         field.shot.t++;
+
+        if (field.shot.kind === 'move') {
+          field.ball.x += field.shot.vx;
+          field.ball.y += field.shot.vy;
+        } else {
+          // quadratic Bézier interpolation
+          const u = Math.min(1, field.shot.t / field.shot.time);
+          const inv = 1 - u;
+          field.ball.x = inv * inv * field.shot.x0 + 2 * inv * u * field.shot.cx + u * u * field.shot.x1;
+          field.ball.y = inv * inv * field.shot.y0 + 2 * inv * u * field.shot.cy + u * u * field.shot.y1;
+        }
+
         field.spark.push({ x: field.ball.x, y: field.ball.y, t: 0, life: field.shot.kind === 'move' ? 14 : 22 });
 
         if (field.shot.t >= field.shot.time) {
@@ -1431,8 +1493,8 @@
         if (state.streak % 5 === 0) state.level += 1;
         updateHUD();
         setCoachText('GOAL! ✅ Great finish — same denominator, then simplify.', 'good');
-        field.ball.x = field.pts[4].x;
-        field.ball.y = field.pts[4].y;
+        //field.ball.x = field.pts[4].x;
+        //field.ball.y = field.pts[4].y;
         finishShot(label, true);
         return;
       } else {
