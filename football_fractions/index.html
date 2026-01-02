@@ -385,6 +385,11 @@
       margin-left: 10px;
       white-space: nowrap;
     }
+
+    .timer-warn {
+      color: var(--bad);
+      font-weight: 900;
+    }
   </style>
 </head>
 
@@ -589,18 +594,29 @@
       state.deadlineMs = Date.now() + state.stepSeconds * 1000;
       state.lastShownSec = null;
       state.timedOutLatch = false;
+
+      ui.timer.classList.remove('timer-warn'); // 👈 reset colour
       updateTimerUI();
     }
-
     function updateTimerUI() {
       const leftMs = Math.max(0, state.deadlineMs - Date.now());
       const leftSec = Math.ceil(leftMs / 1000);
+
       if (state.lastShownSec !== leftSec) {
         state.lastShownSec = leftSec;
         ui.timer.textContent = String(leftSec);
+
+        // 🔴 Turn red below 10 seconds
+        if (leftSec <= 10) {
+          ui.timer.classList.add('timer-warn');
+        } else {
+          ui.timer.classList.remove('timer-warn');
+        }
       }
+
       return leftSec;
     }
+
 
     function makeProblem() {
 
