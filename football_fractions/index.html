@@ -377,6 +377,13 @@
       input[type="range"] {
         width: 140px;
       }
+
+    }
+
+    #lcmHint {
+      align-self: center;
+      margin-left: 10px;
+      white-space: nowrap;
     }
   </style>
 </head>
@@ -452,9 +459,15 @@
         <span class="frac" aria-label="second fraction"><span class="top" id="bTop">1</span><span
             class="bar"></span><span class="bot" id="bBot">3</span></span>
         <span class="op">=</span>
+
+
         <span class="frac" aria-label="result fraction"><span class="top" id="rTop">?</span><span
             class="bar"></span><span class="bot" id="rBot">?</span></span>
+
+        <span id="lcmHint" class="mul small" style="margin-top:6px; display:none;"></span>
+
         <span class="badge" id="goalTarget">Goal kick: Pick the LCM to start the move.</span>
+
       </div>
 
 
@@ -535,6 +548,7 @@
       difficulty: document.getElementById('difficulty'),
       diffLabel: document.getElementById('diffLabel'),
       goalTarget: document.getElementById('goalTarget'),
+      lcmHint: document.getElementById('lcmHint'),
     };
 
     const state = {
@@ -606,8 +620,9 @@
       let tries = 0;
       while (d2 === d1 && tries < 6) { d2 = randomInt(denomMin, denomMax); tries++; }
 
-      const nMax1 = Math.max(1, Math.floor(d1 * (diff === 3 ? 0.95 : 0.8)));
-      const nMax2 = Math.max(1, Math.floor(d2 * (diff === 3 ? 0.95 : 0.8)));
+      const nMax1 = Math.max(1, Math.floor(d1 * 0.8));
+      const nMax2 = Math.max(1, Math.floor(d2 * 0.8));
+
       let n1 = randomInt(1, nMax1);
       let n2 = randomInt(1, nMax2);
 
@@ -631,7 +646,8 @@
       const bn = n2 * bMul;
       const rn = op === '+' ? (an + bn) : (an - bn);
 
-      const answer = (diff === 3) ? simplify(rn, common) : { n: rn, d: common };
+      const shouldSimplify = state.difficulty > 1;
+      const answer = shouldSimplify ? simplify(rn, common) : { n: rn, d: common };
 
       return { n1, d1, n2, d2, op, common, aMul, bMul, an, bn, raw: { n: rn, d: common }, answer: answer };
     }
@@ -766,6 +782,15 @@
         ui.bBot.textContent = String(showSecondConverted ? p.common : p.d2);
       }
 
+      // Show LCM once it has been found (progress >= 1)
+      if (state.progress >= 1) {
+        ui.lcmHint.style.display = 'inline';
+        ui.lcmHint.textContent = `LCM = ${p.common}`;
+      } else {
+        ui.lcmHint.style.display = 'none';
+        ui.lcmHint.textContent = '';
+      }
+
       ui.op.textContent = p.op;
 
       if (state.progress >= 4) {
@@ -859,12 +884,13 @@
       });
 
       for (let i = 1; i < 11; i++) {
+        const x = 140 + randomInt(-40, 240);
+        const y = 120 + i * 28 + randomInt(-10, 10);
         field.teams.home.push({
-          x: 140 + randomInt(-40, 240),
-          y: 120 + i * 28 + randomInt(-10, 10),
-          vx: 0,
-          vy: 0,
+          x, y,
+          vx: 0, vy: 0,
           r: 8,
+          homeX: x, homeY: y,
         });
       }
 
@@ -880,12 +906,18 @@
       });
 
       for (let i = 1; i < 11; i++) {
+
+        x = 560 + randomInt(-40, 260);
+        y = 120 + i * 28 + randomInt(-10, 10);
+
         field.teams.away.push({
-          x: 560 + randomInt(-40, 260),
-          y: 120 + i * 28 + randomInt(-10, 10),
+          x: x,
+          y: y,
           vx: (Math.random() * 0.6 - 0.3),
           vy: (Math.random() * 0.6 - 0.3),
           r: 8,
+          homeX: x,
+          homeY: y,
         });
       }
     }
@@ -894,43 +926,161 @@
       const b = pitch.bounds;
       const pad = 26;
 
-      const stepTeam = (arr) => {
-        for (var i = 0; i < arr.length; i++) {
+      const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
-          if (i == 0) {
-            continue;
-          }
+      // Move p so they arrive at (tx,ty) in framesLeft frames (smooth + clamped)
+      function arrive(p, tx, ty, framesLeft, maxSpeed = 2.2) {
+        const dx = tx - p.x;
+        const dy = ty - p.y;
 
-          const p = arr[i];
+        const vx = dx / Math.max(1, framesLeft);
+        const vy = dy / Math.max(1, framesLeft);
 
-          // gentle wandering
+        // smooth toward desired velocity
+        p.vx = p.vx * 0.75 + vx * 0.25;
+        p.vy = p.vy * 0.75 + vy * 0.25;
+
+        // clamp speed
+        p.vx = clamp(p.vx, -maxSpeed, maxSpeed);
+        p.vy = clamp(p.vy, -maxSpeed, maxSpeed);
+
+        p.x += p.vx;
+        p.y += p.vy;
+
+        // keep inside pitch
+        const minX = b.x + pad, maxX = b.x + b.w - pad;
+        const minY = b.y + pad, maxY = b.y + b.h - pad;
+        if (p.x < minX) p.x = minX;
+        if (p.x > maxX) p.x = maxX;
+        if (p.y < minY) p.y = minY;
+        if (p.y > maxY) p.y = maxY;
+      }
+
+      // ---------- HOME TEAM ----------
+      const home = field.teams.home;
+
+      // keeper: mostly fixed
+      if (home[0]) {
+        arrive(home[0],
+          pitch.ownGoal.x + 12,
+          pitch.ownGoal.y + pitch.ownGoal.h / 2,
+          25,
+          1.0
+        );
+      }
+
+      const passInFlight = field.shot && field.shot.kind === 'move';
+
+      if (passInFlight) {
+        const shot = field.shot;
+        const framesLeft = Math.max(1, shot.time - shot.t);
+
+        const kicker = (shot.kickerIdx != null) ? home[shot.kickerIdx] : null;
+        const receiver = (shot.receiverIdx != null) ? home[shot.receiverIdx] : null;
+        const runner = (shot.runnerIdx != null) ? home[shot.runnerIdx] : null;
+
+        // 1) Receiver to N+1 (be there to collect the pass)
+        if (receiver && shot.tx != null) {
+          // small offset so it looks like they "check to" the ball rather than stand on a dot
+          const yOff = (shot.receiverIdx % 2 ? 14 : -14);
+          arrive(receiver, shot.tx - 6, shot.ty + yOff, framesLeft, 2.8);
+        }
+
+        // 2) Runner to N+2 (next option upfield)
+        if (runner && shot.tx2 != null) {
+          // arrive a touch later than receiver for natural spacing
+          const yOff2 = (shot.runnerIdx % 2 ? 22 : -22);
+          arrive(runner, shot.tx2 - 10, shot.ty2 + yOff2, Math.max(1, framesLeft + 10), 2.5);
+        }
+
+        // 3) Kicker jogs after the pass / stays near play
+        if (kicker) {
+          arrive(kicker, field.ball.x - 18, field.ball.y, 18, 2.2);
+        }
+
+        // 4) Everyone else pushes up into support lanes
+        for (let i = 1; i < home.length; i++) {
+          if (i === shot.kickerIdx || i === shot.receiverIdx || i === shot.runnerIdx) continue;
+          const p = home[i];
+
+          // push target: behind the ball a bit, but advancing as the ball advances
+          const tx = Math.min(field.ball.x + 90, p.x + 1.4);
+          // keep their current lane, slight life
+          const ty = p.y + (Math.random() * 0.8 - 0.4);
+
+          arrive(p, tx, ty, 55, 1.6);
+        }
+
+      } else {
+        // No pass: gentle wandering like your original
+        for (let i = 1; i < home.length; i++) {
+          const p = home[i];
+
           if (Math.random() < 0.03) {
             p.vx += (Math.random() * 0.4 - 0.2);
             p.vy += (Math.random() * 0.4 - 0.2);
           }
-          // clamp speed
-          p.vx = Math.max(-0.9, Math.min(0.9, p.vx));
-          p.vy = Math.max(-0.9, Math.min(0.9, p.vy));
+          p.vx = clamp(p.vx, -0.9, 0.9);
+          p.vy = clamp(p.vy, -0.9, 0.9);
 
           p.x += p.vx;
           p.y += p.vy;
 
-          // bounce within pitch
-          const minX = b.x + pad;
-          const maxX = b.x + b.w - pad;
-          const minY = b.y + pad;
-          const maxY = b.y + b.h - pad;
+          const minX = b.x + pad, maxX = b.x + b.w - pad;
+          const minY = b.y + pad, maxY = b.y + b.h - pad;
 
           if (p.x < minX) { p.x = minX; p.vx *= -0.9; }
           if (p.x > maxX) { p.x = maxX; p.vx *= -0.9; }
           if (p.y < minY) { p.y = minY; p.vy *= -0.9; }
           if (p.y > maxY) { p.y = maxY; p.vy *= -0.9; }
         }
-      };
+      }
 
-      stepTeam(field.teams.home);
-      stepTeam(field.teams.away);
+      // ---------- AWAY TEAM ----------
+      const away = field.teams.away;
+
+      // away keeper: mostly fixed
+      if (away[0]) {
+        arrive(away[0],
+          pitch.goal.x + pitch.goal.w - 12,
+          pitch.goal.y + pitch.goal.h / 2,
+          25,
+          1.0
+        );
+      }
+
+      // away outfield: light defending / wandering
+      for (let i = 1; i < away.length; i++) {
+        const p = away[i];
+
+        // mild bias toward ball so defenders feel responsive
+        const biasX = (field.ball.x - p.x) * 0.0008;
+        const biasY = (field.ball.y - p.y) * 0.0008;
+
+        if (Math.random() < 0.03) {
+          p.vx += (Math.random() * 0.4 - 0.2) + biasX;
+          p.vy += (Math.random() * 0.4 - 0.2) + biasY;
+        } else {
+          p.vx += biasX;
+          p.vy += biasY;
+        }
+
+        p.vx = clamp(p.vx, -1.0, 1.0);
+        p.vy = clamp(p.vy, -1.0, 1.0);
+
+        p.x += p.vx;
+        p.y += p.vy;
+
+        const minX = b.x + pad, maxX = b.x + b.w - pad;
+        const minY = b.y + pad, maxY = b.y + b.h - pad;
+
+        if (p.x < minX) { p.x = minX; p.vx *= -0.9; }
+        if (p.x > maxX) { p.x = maxX; p.vx *= -0.9; }
+        if (p.y < minY) { p.y = minY; p.vy *= -0.9; }
+        if (p.y > maxY) { p.y = maxY; p.vy *= -0.9; }
+      }
     }
+
 
     function resetPlayToStart() {
       state.phase = 0;
@@ -952,15 +1102,69 @@
       const to = field.pts[state.phase + 1];
       if (!to) return;
 
+      const to2 = field.pts[state.phase + 2] || null; // ✅ N+2 target if it exists
+
       const time = 34;
       const vx = (to.x - from.x) / time;
       const vy = (to.y - from.y) / time;
 
+      // choose kicker: nearest home outfield player to CURRENT ball
+      let kickerIdx = 1, bestK = Infinity;
+      for (let i = 1; i < field.teams.home.length; i++) {
+        const p = field.teams.home[i];
+        const dx = p.x - field.ball.x, dy = p.y - field.ball.y;
+        const d2 = dx * dx + dy * dy;
+        if (d2 < bestK) { bestK = d2; kickerIdx = i; }
+      }
+
+      // choose receiver: nearest home outfield player to N+1 target
+      let receiverIdx = 1, bestR = Infinity;
+      for (let i = 1; i < field.teams.home.length; i++) {
+        if (i === kickerIdx) continue;
+        const p = field.teams.home[i];
+        const dx = p.x - to.x, dy = p.y - to.y;
+        const d2 = dx * dx + dy * dy;
+        if (d2 < bestR) { bestR = d2; receiverIdx = i; }
+      }
+
+      // choose runner: nearest home outfield player to N+2 target (if it exists)
+      let runnerIdx = null;
+      if (to2) {
+        let best2 = Infinity;
+        for (let i = 1; i < field.teams.home.length; i++) {
+          if (i === kickerIdx || i === receiverIdx) continue;
+          const p = field.teams.home[i];
+          const dx = p.x - to2.x, dy = p.y - to2.y;
+          const d2 = dx * dx + dy * dy;
+          if (d2 < best2) { best2 = d2; runnerIdx = i; }
+        }
+      }
+
+      // snap kicker close to the ball for the "kick" moment
+      field.teams.home[kickerIdx].x = field.ball.x - 10;
+      field.teams.home[kickerIdx].y = field.ball.y;
+
       field.ball.x = from.x;
       field.ball.y = from.y;
-      field.shot = { vx, vy, t: 0, time, kind: 'move', label: successLabel };
+
+      // ✅ store both targets + chosen players
+      field.shot = {
+        vx, vy, t: 0, time,
+        kind: 'move',
+        label: successLabel,
+
+        tx: to.x, ty: to.y,              // N+1
+        tx2: to2 ? to2.x : null,          // N+2 (maybe)
+        ty2: to2 ? to2.y : null,
+
+        kickerIdx,
+        receiverIdx,
+        runnerIdx
+      };
+
       field.spark.push({ x: field.ball.x, y: field.ball.y, t: 0, life: 18 });
     }
+
 
     function finishShot(successLabel, wasGoal) {
       const targetX = wasGoal
@@ -1191,12 +1395,15 @@
     // Game Logic
     // ==============================
     function chooseAnswer(btn) {
+
       if (state.locked || !state.current) return;
+
       state.locked = true;
       lockChoices(true);
 
       const correct = btn.dataset.correct === '1';
       const label = btn.dataset.label || '';
+
 
       if (correct) {
         // Mark current step as completed
@@ -1229,6 +1436,27 @@
         finishShot(label, true);
         return;
       } else {
+
+        // Special case: if they picked the PRODUCT of the denominators at LCM step
+        const picked = Number(btn.dataset.label);
+
+        if (
+          state.phase === 0 &&
+          !correct &&
+          picked === state.current.d1 * state.current.d2 &&
+          picked !== state.current.common
+        ) {
+          setCoachText(
+            `That’s the product (${state.current.d1} × ${state.current.d2}), not the LCM. 
+        Try finding the smallest number both denominators divide into.`,
+            'warn'
+          );
+
+          // Do NOT reset the whole play — just unlock choices again
+          state.locked = false;
+          lockChoices(false);
+          return;
+        }
 
         // Wrong: restart from goal kick (same problem) + streak breaks
         state.streak = 0;
